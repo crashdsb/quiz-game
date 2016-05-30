@@ -245,3 +245,5 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+MaterialUI/
+Standard Assets/
