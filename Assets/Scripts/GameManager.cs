@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour {
     private Text factText;
 
     [SerializeField]
-    private float timeBetweenQuestions = 2f;
+    private float timeBetweenQuestions = 4f;
 
     [SerializeField]
     private Text trueAnswerText;
@@ -30,16 +30,29 @@ public class GameManager : MonoBehaviour {
     private Text scoreText;
 
     [SerializeField]
-    private static int scorePoints;
+    private Text healthText;
 
-    //This is the ResetScorePoints
     [SerializeField]
-    private int resetScorePoints;
+    private static int healthLives;
+
+    [SerializeField]
+    private static int resetScorePoints;
+
+    [SerializeField]
+    private static int scorePoints;
 
 
     void Start()
     {
         UpdateScore();
+
+        UpdateHealth();
+
+        if (healthLives == 0)
+            HealthLoss(3);
+        else {
+            HealthLoss(0);
+        }
 
         if (unansweredQuestions == null || unansweredQuestions.Count == 0)
         {
@@ -48,6 +61,21 @@ public class GameManager : MonoBehaviour {
 
         SetCurrentQuestion();
 
+    }
+
+    void UpdateHealth()
+    {
+        healthText.text = "Lives: " + healthLives;
+
+    }
+
+    public void HealthLoss(int newHealth)
+    {
+        healthLives += newHealth;
+        UpdateHealth();
+        if (healthLives == 0) SceneManager.LoadScene("Menu");
+        {
+        }
     }
 
     //This void method calls for Score: to = 0
@@ -63,22 +91,22 @@ public class GameManager : MonoBehaviour {
         scoreText.text = "Score: " + scorePoints;
     }
 
-    void SetCurrentQuestion ()
+
+    void UpdateText()
+    {
+        trueAnswerText.text = "TRUE";
+        falseAnswerText.text = "FALSE";
+    }
+
+
+
+        void SetCurrentQuestion ()
     {
         int randomQuestionIndex = Random.Range(0, unansweredQuestions.Count);
         currentQuestion = unansweredQuestions[randomQuestionIndex];
 
         factText.text = currentQuestion.fact;
 
-        if (currentQuestion.isTrue)
-        {
-            trueAnswerText.text = "CORRECT";
-            falseAnswerText.text = "WRONG";
-        } else
-        {
-            trueAnswerText.text = "WRONG";
-            falseAnswerText.text = "CORRECT";
-        }
     }
 
     //This transitions between questions.
@@ -88,49 +116,57 @@ public class GameManager : MonoBehaviour {
 
         yield return new WaitForSeconds(timeBetweenQuestions);
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SetCurrentQuestion();
+
+        UpdateText();
+
+        factText.text = currentQuestion.fact;
+        
+        //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 
     }
 
     public void UserSelectTrue()
     {
-        animator.SetTrigger("True");
         if (currentQuestion.isTrue)
         {
             AddScore(1);
+            trueAnswerText.text = "CORRECT";
             Debug.Log("CORRECT!");
         } else
         {
+            trueAnswerText.text = "INCORRECT";
             AddScore(-1);
+            HealthLoss(-1);
             Debug.Log("WRONG!");
         }
         StartCoroutine(TransitionToNextQuestion());
-
     }
 
     public void UserSelectFalse()
     {
-        animator.SetTrigger("False");
         if (!currentQuestion.isTrue)
         {
+            falseAnswerText.text = "CORRECT!";
             AddScore(1);
             Debug.Log("CORRECT!");
         }
         else
         {
             AddScore(-1);
+            HealthLoss(-1);
+            falseAnswerText.text = "INCORRECT";
             Debug.Log("WRONG!");
         }
-
         StartCoroutine(TransitionToNextQuestion());
     }
-
     //This is the UpdateScore method, which updates score +1 or -1 per question.
     public void AddScore(int newScore)
     {
         scorePoints += newScore;
         UpdateScore();
     }
+
 
     //This calls for Menu Button to Send Player to Main Menu, and Reset Points.
     public void LoadScene(string SceneName)
